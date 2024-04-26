@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block menu %}
+    <a href="/" class="btn btn-warning home">На главную</a>
+    <div class="counter" id="counter">{{ life.counter }}</div>
+    <form action="/reload_world" method="post" name="form">
+        <input type="button" value="Создать новую жизнь" onclick="reload_world()" class="btn btn-info refresh"/>
+    </form>
+{% endblock %}
+
+{% block app_content %}
+    <table class="world">
+        {% for i in range(life.world|length) %}
+            <tr>
+                {% for j in range(life.world[i]|length) %}
+                    {% if life.world[i][j] %}
+                        <td class="cell living-cell" id="{{i}}_{{j}}"></td>
+                    {% elif life.old_world[i][j] %}
+                        <td class="cell dead-cell" id="{{i}}_{{j}}"></td>
+                    {% else %}
+                        <td class="cell" id="{{i}}_{{j}}"></td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<!--
+<script>
+    setInterval(() => window.location.reload(), 1000);
+</script>
+-->
+<script>
+    function reload_world() {
+        $.ajax({
+            type: "POST",
+            url: "/reload_world",
+            data: $('form').serialize(),
+            type: 'POST',
+            success: function(response) {
+                json = jQuery.parseJSON(response);
+                $('#counter').text(json['counter']);
+                world = json['world'];
+                len = world.length;
+                old_world = json['old_world'];
+                for (let i = 0; i < len; i++) {
+                    for (let j = 0; j < len; j++) {
+                        td = $('#' + i + '_' + j);
+                        
+                        if (world[i][j])
+                            td.css({'background': 'lightgreen'});
+                        else if (old_world[i][j])
+                            td.css({'background': 'darkred'});
+                        else
+                            td.css({'background': 'whitesmoke'});
+                        
+                    }
+                }
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
+</script>
+{% endblock %}
